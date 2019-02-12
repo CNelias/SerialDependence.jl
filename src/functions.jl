@@ -1,6 +1,6 @@
 using Statistics
 
-export cramer_coefficient
+export cramer_coefficient, LaggedBivariateProbability
 
 """
 Returns the lagged bivariate probability of two given categories, Pij.
