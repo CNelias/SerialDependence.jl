@@ -1,5 +1,7 @@
 using Statistics
 
+export cramer_coefficient
+
 """
 Returns the lagged bivariate probability of two given categories, Pij.
 Given i and j two categories, and l a lag,
