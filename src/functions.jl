@@ -1,7 +1,8 @@
 using Statistics
 using StatsBase
 
-export cramer_coefficient, LaggedBivariateProbability
+export cramer_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, Theils_U
+
 
 """
 Returns the lagged bivariate probability of two given categories, Pij.
