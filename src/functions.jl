@@ -113,10 +113,12 @@ function cramer_coefficient(Serie,Lags::Array{Int64,1},Categories)
     end
     return Lags,V
 end
+
 """
 Compute the entropy associated to the given categorical time-series.
 It characterizes amount of information carried by the probabilistic distribution of the categories,
 In other words, it tells you how "disperse" the distribution is.
+
 """
 function entropy(x)
     x_count = countmap(x)
@@ -152,8 +154,8 @@ function Theils_U(x,y)
     return (entropy(x)-conditional_entropy(x,y))/entropy(x)
 end
 
-function Theils_U(x,y,Lags)
-    return [Theils_U(x[1:end - L],y[L+1:end]) for L in Lags]
+function Theils_U(x,Lags)
+    return [(entropy(x[1:length(x)-l])-conditional_entropy(x[1:length(x)-l],x[l+1:end]))/entropy(x[1:length(x)-l]) for l in Lags]
 end
 
 function rate_evolution(data)
