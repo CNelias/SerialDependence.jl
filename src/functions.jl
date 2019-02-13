@@ -1,4 +1,5 @@
 using Statistics
+using StatsBase
 
 export cramer_coefficient, LaggedBivariateProbability
 
@@ -111,4 +112,61 @@ function cramer_coefficient(Serie,Lags::Array{Int64,1},Categories)
         append!(V,sqrt(v/(length(Categories)-1)))
     end
     return Lags,V
+end
+"""
+Compute the entropy associated to the given categorical time-series.
+It characterizes amount of information carried by the probabilistic distribution of the categories,
+In other words, it tells you how "disperse" the distribution is.
+"""
+function entropy(x)
+    x_count = countmap(x)
+    total_occurences = sum(values(x_count))
+    entropy = 0.0
+    for occurence in values(x_count)
+        px = occurence/total_occurences
+        entropy -= px*log2(px)
+    end
+    return entropy
+end
+
+"""
+Computing the conditional entropy of y given x: H(Y|X),
+Given in bits or shannons (meaning using the log2 for the measurement).
+Wikipedia: https://en.wikipedia.org/wiki/Conditional_entropy
+
+"""
+function conditional_entropy(y,x)
+    xy_count = countmap(collect(zip(y,x)))
+    x_count = countmap(x)
+    total_occurences = sum(values(xy_count))
+    entropy = 0.0
+    for xy in keys(xy_count)
+        p_xy = xy_count[xy]/total_occurences
+        p_x = x_count[xy[2]]/total_occurences
+        entropy += p_xy*log2(p_x/p_xy)
+    end
+    return entropy
+end
+
+function Theils_U(x,y)
+    return (entropy(x)-conditional_entropy(x,y))/entropy(x)
+end
+
+function Theils_U(x,y,Lags)
+    return [Theils_U(x[1:end - L],y[L+1:end]) for L in Lags]
+end
+
+function rate_evolution(data)
+    categories = unique(data)
+    RATE = []
+    for c in categories
+        init = zeros(length(data))
+        for v in 1:length(data)
+            if data[v] == c
+                init[v] = 1
+            end
+        end
+        push!(RATE,cumsum(init))
+    end
+    return RATE
 end
