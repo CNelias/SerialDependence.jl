@@ -5,6 +5,7 @@ export cramer_coefficient, conditional_entropy, LaggedBivariateProbability, entr
 
 
 """
+Used in the computation of cramer's V and cohen's K.
 Returns the lagged bivariate probability of two given categories, Pij.
 Given i and j two categories, and l a lag,
 Pij is the probability to have the category j at time t + l, if we have i at time t.
@@ -16,10 +17,8 @@ Pij is the probability to have the category j at time t + l, if we have i at tim
     - category2 : the second category
 
     output :
-    - Pij : the probability the observe j at t + l if we observe i at time t.
-
+    - Pij : the probability to observe j at t + l if we observe i at time t.
 """
-
 function LaggedBivariateProbability(TimeSerie, Lag::Int, Category1, Category2)
     Pij = 0
     lagged_serie_length = length(TimeSerie) - Lag
@@ -32,25 +31,33 @@ function LaggedBivariateProbability(TimeSerie, Lag::Int, Category1, Category2)
 end
 
 """
-Computes the lagged bivariate probability, Pij, for the given Array of Lag values, and returns an array.
-See LaggedBivariateProbability(TimeSerie, Lag::Int, Category1, Category2).
-
-    inputs :
-    - time series : the data to analyse.
-    - Lags : an array of lags containing the different lag values at which one wants
-             to carry the analysis.
-    - category1 : the first category.
-    - category2 : the second category.
-
-    output :
-    - Pij : Array of lagged bivariate probabilities for the given lags.
-
+If an array of lags 'Lag' is provided instead of a single value, computes Pij for each lag value and returns an array.
 """
-
 function LaggedBivariateProbability(TimeSerie, Lags, Category1, Category2)
     Pij = [LaggedBivariateProbability(TimeSerie,L,Category1,Category2) for L in Lags]
     return Lags,Pij
 end
+
+"""
+If no categories are explicitely provided, will a CxC symmetric probability matrix, with C the number of != categories.
+the element [i,j] of this matrix corresponds to Pij at lag 'Lag'. Use this function if you want to have the contingency table at lag 'Lag'.
+"""
+function LaggedBivariateProbability(TimeSerie, Lag)
+    categories = unique(TimeSeries)
+    Pij = zeros(length(Lag),length(categories), length(categories))
+    lagged_serie_length = length(TimeSerie) - Lag
+    for i in category
+        for j in category
+            for t in 1:lagged_serie_length
+                if (TimeSerie[t] == i) && (TimeSerie[t + Lag] == j)
+                        Pij[i,j] += 1/(lagged_serie_length)
+                end
+            end
+        end
+    end
+    return Pij
+end
+
 
 """
 Returns the relative frequency of a given category (of type ::Any).
@@ -68,10 +75,20 @@ function relative_frequency(TimeSerie, Category::Any)
     return Pi
 end
 
-function cohen_coefficient(Serie, Lag::Int64, Categories)
+"""
+Computes the lagged cohen coefficient κ describing how much the different categories
+are correlated to each others at different lag values in the time-series. K is a measure of agreement.
+input:
+    -Serie : a categorical time series
+    -lag: an integer lag value
+output:
+    -κ : cohen's coefficient
+"""
+function cohen_coefficient(Serie, Lag::Int64)
+    categories = unique(Serie)
     K = 0
     pi_denominateur = 0
-    for i in Categories
+    for i in categories
         K += (LaggedBivariateProbability(Serie,Lag,i,i) -  relative_frequency(Serie,i)^2)
         pi_denominateur =+ relative_frequency(Serie,i)^2
     end
@@ -79,29 +96,38 @@ function cohen_coefficient(Serie, Lag::Int64, Categories)
     return K
 end
 
-function cohen_coefficient(Serie, Lags::Array{Int64,1}, Categories)
-    K = [cohen_coefficient(Serie,l,Categories) for l in Lags]
-    return Lags,K
+"""
+If 'lag' is provided as an array of lags, computes and returns an array of K for each elements of 'lag'.
+"""
+function cohen_coefficient(Serie, Lags::Array{Int64,1})
+    K = [cohen_coefficient(Serie,l) for l in Lags]
+    return K
 end
 
 
 """
-Returns the value of the cramer's V coefficient for the given categories in the given time series.
-It is a measurement of the correlations between these category, it's value lies in [0,1], 0 being : no correlation
-1 being strong correlations.
-V is symmetric, meaning v(A,B) = v(B,A), so the information contained in the asymmetry between the variables is lost.
+    cramer_coefficient(Serie, Lags::Array{Int64,1})
+
+Returns the cramer's V coefficient for the given 'Lags' values.
+
+Cramer's v is used in categorical data analysis to test the degree of association between
+a given set of categorical variable and another set of variables (example : eye color and hair color).
+Here, it measures the association between the categorical values of a time series, and the values at a later lagged time.
+
+V lies in [0,1]. 0 no association, 1 perfect association.
+It is symmetric, meaning v(A,B) = v(B,A), so the information contained in the asymmetry between the variables is lost.
 
     input :
     - Serie : the time series containing the data
-    - Lags : Array containing the lags at which V will be computed
-    - Categories : the categories to be taken in account. should be an
-                   array of two value for a precise analysis, more for a global
-                   Analysis
+    - Lags : Array containing the lags at which V will be computed. If an int is given
+                a single point value will be returned.
+
     output :
     - V : the values of v for the given lags.
 
 """
-function cramer_coefficient(Serie,Lags::Array{Int64,1},Categories)
+function cramer_coefficient(Serie, Lags::Array{Int64,1})
+    Categories = unique(Serie)
     V = Float64[]
     for lag in Lags
         v = 0
@@ -112,7 +138,20 @@ function cramer_coefficient(Serie,Lags::Array{Int64,1},Categories)
         end
         append!(V,sqrt(v/(length(Categories)-1)))
     end
-    return Lags,V
+    return V
+end
+
+function cramer_coefficient(Serie, lag::int64)
+    Categories = unique(Serie)
+    V = Float64[]
+    v = 0
+    for i in Categories
+        for j in Categories
+            v =+ ((LaggedBivariateProbability(Serie,lag,i,j)-relative_frequency(Serie,i)*relative_frequency(Serie,j))^2)/(relative_frequency(Serie,i)*relative_frequency(Serie,j))
+        end
+    end
+    append!(V,sqrt(v/(length(Categories)-1)))
+    return V
 end
 
 """
@@ -151,20 +190,33 @@ function conditional_entropy(y,x)
     return entropy
 end
 
-function Theils_U(x,y)
-    return (entropy(x)-conditional_entropy(x,y))/entropy(x)
-end
 
-function Theils_U(x,Lags)
+"""
+    Theils_U(x, Lags)
+
+Measures what portion of the information associated to the values in 'x' is know at t + lag if the value 'x' is known at t.
+Input :
+    x : a categorical time-series
+    lags : an array of lags onto U is computed.
+returns:
+    U : an array of U for the given values in 'Lags'.
+"""
+function Theils_U(x, Lags)
     return [(entropy(x[1:length(x)-l])-conditional_entropy(x[1:length(x)-l],x[l+1:end]))/entropy(x[1:length(x)-l]) for l in Lags]
 end
 
-function rate_evolution(data)
-    categories = unique(data)
+"""
+    rate_evolution(Series)
+
+A way to test the stationarity of the input categorical time-series 'Series'.
+if it varies linearly, then the time series is more or less stationary.
+"""
+function rate_evolution(Series)
+    categories = unique(Series)
     RATE = []
     for c in categories
-        init = zeros(length(data))
-        for v in 1:length(data)
+        init = zeros(length(Series))
+        for v in 1:length(Series)
             if data[v] == c
                 init[v] = 1
             end
