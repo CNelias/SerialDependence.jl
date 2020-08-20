@@ -1,5 +1,6 @@
 using Statistics
 using StatsBase
+using Random
 
 export cramer_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, Theils_U
 
@@ -64,10 +65,10 @@ For example, if we have 3 category a,b and c, and a occurs 300 times in a time s
 its relative frequency  is 1/3.
 
 """
-function relative_frequency(TimeSerie, Category::Any)
+function relative_frequency(TimeSerie, idx::Any)
     Pi = 0
     for i in TimeSerie
-        if i == Category
+        if i == unique(TimeSerie)[idx]
             Pi += 1/length(TimeSerie)
         end
     end
@@ -83,16 +84,18 @@ input:
 output:
     -κ : cohen's coefficient
 """
-function cohen_coefficient(Serie, Lag = 1)
+function cohen_coefficient(Serie, lag = 1)
     if typeof(lag) != Int64
         throw("typeError : 'lag' value needs to be integer.")
     end
     categories = unique(Serie)
     K = 0
     pi_denominateur = 0
+    rf_squared = [relative_frequency(Serie,i)^2 for i in 1:length(categories)]
+    lagged_pij = LaggedBivariateProbability(Serie,lag)
     for i in categories
-        K += (LaggedBivariateProbability(Serie,Lag,i,i) -  relative_frequency(Serie,i)^2)
-        pi_denominateur =+ relative_frequency(Serie,i)^2
+        K += (lagged_pij[i,i] - rf_squared[i])
+        pi_denominateur =+ rf_squared[i]
     end
     K = K/(1-pi_denominateur)
     return K
@@ -102,7 +105,7 @@ end
 If 'lag' is provided as an array of lags, computes and returns an array of K for each elements of 'lag'.
 """
 function cohen_coefficient(Serie, Lags::Array{Int64,1})
-    if typeof(lag) != Array{Int64,1}
+    if typeof(Lags) != Array{Int64,1}
         throw("typeError : 'Lags' needs to be an Array{Int64,1}.")
     end
     K = [cohen_coefficient(Serie,l) for l in Lags]
@@ -137,14 +140,17 @@ function cramer_coefficient(Serie, Lags::Array{Int64,1})
     end
     Categories = unique(Serie)
     V = Float64[]
+    d = length(Categories)-1
+    rf = [relative_frequency(Serie, i) for i in 1:length(Categories)]
     for lag in Lags
         v = 0
+        lagged_pij = LaggedBivariateProbability(Serie, lag)
         for i in Categories
             for j in Categories
-                v =+ ( (LaggedBivariateProbability(Serie,lag,i,j)-relative_frequency(Serie,i)*relative_frequency(Serie,j))^2) / (relative_frequency(Serie,i)*relative_frequency(Serie,j) )
+                v =+ ( (lagged_pij[i,j]-rf[i]*rf[j])^2 ) / (rf[i]*rf[j])
             end
         end
-        append!(V,sqrt(v/(length(Categories)-1)))
+        append!(V,sqrt(v/d))
     end
     return V
 end
@@ -156,9 +162,10 @@ function cramer_coefficient(Serie, lag = 1)
     Categories = unique(Serie)
     V = Float64[]
     v = 0
+    lagged_pij = LaggedBivariateProbability(Serie,lag)
     for i in Categories
         for j in Categories
-            v =+ ((LaggedBivariateProbability(Serie,lag,i,j)-relative_frequency(Serie,i)*relative_frequency(Serie,j))^2)/(relative_frequency(Serie,i)*relative_frequency(Serie,j))
+            v =+ ((lagged_pij[i,j]-relative_frequency(Serie,i)*relative_frequency(Serie,j))^2)/(relative_frequency(Serie,i)*relative_frequency(Serie,j))
         end
     end
     append!(V,sqrt(v/(length(Categories)-1)))
@@ -215,7 +222,7 @@ returns:
     U : an array of U for the given values in 'Lags'.
 """
 function theils_U(x, Lags)
-    return [(H(x[1:length(x)-l])-conditional_entropy(x[1:length(x)-l],x[l+1:end]))/H(x[1:length(x)-l]) for l in Lags]
+    return [(H(x[1:end-l]) - conditional_entropy(x[1:end-l], x[l+1:end])) / H(x[1:end-l]) for l in Lags]
 end
 
 """
@@ -237,4 +244,33 @@ function rate_evolution(Series)
         push!(RATE,cumsum(init))
     end
     return RATE
+end
+
+
+"""
+    bootstrap_CI(Series, lags, coefficient, n_iter = 1000)
+
+Provides 95% a confidence interval by shuffling 'Series' 'n_iter' times, computing the values of 'coefficient'
+then finding the value of the top and bottom 2,5% to get the interval.
+This is done for every point in 'lags' (can be costly if 'Series' is long).
+
+Input :
+    - Series : input array of categorical data
+    - coef_func (**function**) : the function for which the CI needs to be computed.
+            'coefficient' can be one of the following **functions** : 'cramer_coefficient, cohen_coefficient, theils_U'.
+    - lags (Array{Int64,1}) : the lag values at which the analysis is conducted
+    - n_iter (Int64) : how many iterations are run for the bootstrap procedure.
+returns :
+    - top (Array{Float64,1}) : Array of values for the upper limit of the CI.
+    - bottom (Array{Float64,1}) : Array of values for the lower limit of the CI.
+"""
+function bootstrap_CI(Series, coef_func, lags, n_iter = 1000)
+    critical_values = zeros(n_iter)
+    bootstrap_storage = zeros(n_iter, length(lags))
+    for i in 1:n_iter
+        bootstrap_storage[i,:] = coef_func(shuffle(Series), lags)
+    end
+    top_values = sort!(bootstrap_storage, dims = 1)[n_iter - div(n_iter,40),:]
+    bottom_values = sort!(bootstrap_storage, dims = 1)[div(n_iter,40),:]
+    return bootstrap_storage, top_values, bottom_values
 end

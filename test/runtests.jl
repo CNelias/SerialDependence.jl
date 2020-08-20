@@ -1,16 +1,15 @@
 using Test
-using DelimitedFiles, CSV
+using StandardTools
+using DelimitedFiles
 using MusicManipulations
 
 cd(@__DIR__)
 
-include("..\\src\\SerialDependence.jl")
-
 #testing the functions by reproducing the results from C. Weiss's book "An Introduction to Discrete-Valued Time Series".
+#I was not able to get my hands the full time-series, C. weiss says it is ~1300 elements long, which explains the slight numerical differences in values.
 pewee = Int64.(readdlm("C:\\Users\\cnelias\\Desktop\\PHD\\StandardTools.jl\\test\\pewee.txt", ',')[1,:])
-
-# @test round(cramer_coefficient(tester,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],["C","E"])[2][6]; digits = 5) == round(0.4145144779175194; digits = 5)
-# @test round(LaggedBivariateProbability(tester,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"C","E")[2][6]; digits = 5) == round(0.009615384615384616; digits = 5)
-# @test entropy(z) == 1.75
-# @test conditional_entropy(y,x) == 0.5
-# @test round(Theils_U(tester,collect(1:30))[3];digits = 5) == round(0.0747438636520575; digits = 5)
+@test round(cramer_coefficient(pewee, 4)[1], digits = 2) == 0.46
+@test round(cohen_coefficient(pewee, 4)[1], digits = 2) == 0.55
+# this one was not in the book, but the plot correctly reproduces the results.
+@test round(theils_U(pewee,[1])[1], digits = 2) == 0.55
+@test round(H(pewee), digits = 2) == 1.49
