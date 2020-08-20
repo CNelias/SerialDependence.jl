@@ -3,7 +3,6 @@ using StatsBase
 
 export cramer_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, Theils_U
 
-
 """
 Used in the computation of cramer's V and cohen's K.
 Returns the lagged bivariate probability of two given categories, Pij.
@@ -33,7 +32,7 @@ end
 """
 If an array of lags 'Lag' is provided instead of a single value, computes Pij for each lag value and returns an array.
 """
-function LaggedBivariateProbability(TimeSerie, Lags, Category1, Category2)
+function LaggedBivariateProbability(TimeSerie, Lags::Array{Int64,1}, Category1, Category2)
     Pij = [LaggedBivariateProbability(TimeSerie,L,Category1,Category2) for L in Lags]
     return Lags,Pij
 end
@@ -42,14 +41,14 @@ end
 If no categories are explicitely provided, will a CxC symmetric probability matrix, with C the number of != categories.
 the element [i,j] of this matrix corresponds to Pij at lag 'Lag'. Use this function if you want to have the contingency table at lag 'Lag'.
 """
-function LaggedBivariateProbability(TimeSerie, Lag)
+function LaggedBivariateProbability(TimeSeries, Lag::Int64)
     categories = unique(TimeSeries)
-    Pij = zeros(length(Lag),length(categories), length(categories))
-    lagged_serie_length = length(TimeSerie) - Lag
-    for i in category
-        for j in category
+    Pij = zeros(length(categories), length(categories))
+    lagged_serie_length = length(TimeSeries) - Lag
+    for i in categories
+        for j in categories
             for t in 1:lagged_serie_length
-                if (TimeSerie[t] == i) && (TimeSerie[t + Lag] == j)
+                if (TimeSeries[t] == i) && (TimeSeries[t + Lag] == j)
                         Pij[i,j] += 1/(lagged_serie_length)
                 end
             end
@@ -84,7 +83,10 @@ input:
 output:
     -κ : cohen's coefficient
 """
-function cohen_coefficient(Serie, Lag::Int64)
+function cohen_coefficient(Serie, Lag = 1)
+    if typeof(lag) != Int64
+        throw("typeError : 'lag' value needs to be integer.")
+    end
     categories = unique(Serie)
     K = 0
     pi_denominateur = 0
@@ -100,6 +102,9 @@ end
 If 'lag' is provided as an array of lags, computes and returns an array of K for each elements of 'lag'.
 """
 function cohen_coefficient(Serie, Lags::Array{Int64,1})
+    if typeof(lag) != Array{Int64,1}
+        throw("typeError : 'Lags' needs to be an Array{Int64,1}.")
+    end
     K = [cohen_coefficient(Serie,l) for l in Lags]
     return K
 end
@@ -127,13 +132,16 @@ It is symmetric, meaning v(A,B) = v(B,A), so the information contained in the as
 
 """
 function cramer_coefficient(Serie, Lags::Array{Int64,1})
+    if typeof(Lags) != Array{Int64,1}
+        throw("typeError : 'Lags' needs to be an Array{Int64,1}.")
+    end
     Categories = unique(Serie)
     V = Float64[]
     for lag in Lags
         v = 0
         for i in Categories
             for j in Categories
-                v =+ ((LaggedBivariateProbability(Serie,lag,i,j)-relative_frequency(Serie,i)*relative_frequency(Serie,j))^2)/(relative_frequency(Serie,i)*relative_frequency(Serie,j))
+                v =+ ( (LaggedBivariateProbability(Serie,lag,i,j)-relative_frequency(Serie,i)*relative_frequency(Serie,j))^2) / (relative_frequency(Serie,i)*relative_frequency(Serie,j) )
             end
         end
         append!(V,sqrt(v/(length(Categories)-1)))
@@ -141,7 +149,10 @@ function cramer_coefficient(Serie, Lags::Array{Int64,1})
     return V
 end
 
-function cramer_coefficient(Serie, lag::int64)
+function cramer_coefficient(Serie, lag = 1)
+    if typeof(lag) != Int64
+        throw("typeError : 'lag' value needs to be integer.")
+    end
     Categories = unique(Serie)
     V = Float64[]
     v = 0
@@ -155,12 +166,14 @@ function cramer_coefficient(Serie, lag::int64)
 end
 
 """
-Compute the entropy associated to the given categorical time-series.
-It characterizes amount of information carried by the probabilistic distribution of the categories,
-In other words, it tells you how "disperse" the distribution is.
+    H(x)
+
+Estimates the probability distribution of the categories in 'x' and computes its entropy.
+It characterizes the amount of information carried by the distribution.
+it tells how "disperse" the distribution is.
 
 """
-function entropy(x)
+function H(x)
     x_count = countmap(x)
     total_occurences = sum(values(x_count))
     entropy = 0.0
@@ -201,8 +214,8 @@ Input :
 returns:
     U : an array of U for the given values in 'Lags'.
 """
-function Theils_U(x, Lags)
-    return [(entropy(x[1:length(x)-l])-conditional_entropy(x[1:length(x)-l],x[l+1:end]))/entropy(x[1:length(x)-l]) for l in Lags]
+function theils_U(x, Lags)
+    return [(H(x[1:length(x)-l])-conditional_entropy(x[1:length(x)-l],x[l+1:end]))/H(x[1:length(x)-l]) for l in Lags]
 end
 
 """
