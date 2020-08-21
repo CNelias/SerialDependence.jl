@@ -212,7 +212,7 @@ end
 
 
 """
-    Theils_U(x, Lags)
+    theils_u(x, Lags)
 
 Measures what portion of the information associated to the values in 'x' is know at t + lag if the value 'x' is known at t.
 Input :
@@ -221,7 +221,7 @@ Input :
 returns:
     U : an array of U for the given values in 'Lags'.
 """
-function theils_U(x, Lags)
+function theils_u(x, Lags)
     return [(H(x[1:end-l]) - conditional_entropy(x[1:end-l], x[l+1:end])) / H(x[1:end-l]) for l in Lags]
 end
 
@@ -275,6 +275,6 @@ function bootstrap_CI(Series, coef_func, lags, n_iter = 1000)
     return bootstrap_storage, top_values, bottom_values
 end
 
-export cramer_coefficient, cohen_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, Theils_U
+export cramer_coefficient, cohen_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, theils_u
 
 end
