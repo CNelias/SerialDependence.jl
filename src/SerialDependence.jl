@@ -180,7 +180,7 @@ function cramer_coefficient(Serie, lag = 1)
             v =+ ((lagged_pij[i,j]-rf[i]*rf[j])^2)/(rf[i]*rf[j])
         end
     end
-    return v/d
+    return sqrt(v/d)
 end
 
 """
