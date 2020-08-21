@@ -1,4 +1,3 @@
-using Statistics
 using StatsBase
 using Random
 
