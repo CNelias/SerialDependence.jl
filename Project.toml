@@ -1,0 +1,15 @@
+name = "SerialDependence"
+uuid = "807e6dab-69e6-5de1-b50c-dbd9513c50df"
+authors = ["Corentin Nelias <cwokpoubelle@laposte.net>"]
+version = "0.1.0"
+
+[deps]
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
