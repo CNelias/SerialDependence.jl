@@ -275,6 +275,6 @@ function bootstrap_CI(Series, coef_func, lags, n_iter = 1000)
     return bootstrap_storage, top_values, bottom_values
 end
 
-export cramer_coefficient, cohen_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, theils_u
+export cramer_coefficient, cohen_coefficient, conditional_entropy, LaggedBivariateProbability, H, theils_u, rate_evolution
 
 end
