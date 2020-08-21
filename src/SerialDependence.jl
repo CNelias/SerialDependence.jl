@@ -1,7 +1,8 @@
+module SerialDependence
+
 using StatsBase
 using Random
 
-export cramer_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, Theils_U
 
 """
 Used in the computation of cramer's V and cohen's K.
@@ -272,4 +273,8 @@ function bootstrap_CI(Series, coef_func, lags, n_iter = 1000)
     top_values = sort!(bootstrap_storage, dims = 1)[n_iter - div(n_iter,40),:]
     bottom_values = sort!(bootstrap_storage, dims = 1)[div(n_iter,40),:]
     return bootstrap_storage, top_values, bottom_values
+end
+
+export cramer_coefficient, conditional_entropy, LaggedBivariateProbability, entropy, Theils_U
+
 end
