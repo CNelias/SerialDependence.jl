@@ -43,14 +43,14 @@ If no categories are explicitely provided, will a CxC symmetric probability matr
 the element [i,j] of this matrix corresponds to Pij at lag 'Lag'. Use this function if you want to have the contingency table at lag 'Lag'.
 """
 function LaggedBivariateProbability(TimeSeries, Lag::Int64)
-    categories = unique(TimeSeries)
+    categories = sort(unique(TimeSeries))
     Pij = zeros(length(categories), length(categories))
     lagged_serie_length = length(TimeSeries) - Lag
-    for i in categories
-        for j in categories
+    for (idxi, i) in enumerate(categories)
+        for (idxj, j) in enumerate(categories)
             for t in 1:lagged_serie_length
                 if (TimeSeries[t] == i) && (TimeSeries[t + Lag] == j)
-                        Pij[i,j] += 1/(lagged_serie_length)
+                        Pij[idxi, idxj] += 1/(lagged_serie_length)
                 end
             end
         end
@@ -92,10 +92,10 @@ function cohen_coefficient(Serie, lag = 1)
     K = 0
     pi_denominateur = 0
     rf_squared = [relative_frequency(Serie,i)^2 for i in 1:length(categories)]
-    lagged_pij = LaggedBivariateProbability(Serie,lag)
-    for i in categories
-        K += (lagged_pij[i,i] - rf_squared[i])
-        pi_denominateur =+ rf_squared[i]
+    lagged_pij = LaggedBivariateProbability(Serie, lag)
+    for (idxi, i) in enumerate(categories)
+        K += (lagged_pij[idxi, idxi] - rf_squared[idxi])
+        pi_denominateur =+ rf_squared[idxi]
     end
     K = K/(1-pi_denominateur)
     return K
@@ -106,9 +106,21 @@ If 'lag' is provided as an array of lags, computes and returns an array of K for
 """
 function cohen_coefficient(Serie, Lags::Array{Int64,1})
     if typeof(Lags) != Array{Int64,1}
-        throw("typeError : 'Lags' needs to be an Array{Int64,1}.")
+        throw("typeError : 'lag' value needs to be integer.")
     end
-    K = [cohen_coefficient(Serie,l) for l in Lags]
+    categories = unique(Serie)
+    K = zeros(length(Lags))
+    rf_squared = [relative_frequency(Serie,i)^2 for i in 1:length(categories)]
+    for (lidx,l) in enumerate(Lags)
+        k = 0
+        pi_denominateur = 0
+        lagged_pij = LaggedBivariateProbability(Serie, l)
+        for (idxi, i) in enumerate(categories)
+            k += (lagged_pij[idxi, idxi] - rf_squared[idxi])
+            pi_denominateur =+ rf_squared[idxi]
+        end
+        K[lidx] =  k/(1-pi_denominateur)
+    end
     return K
 end
 
@@ -139,18 +151,18 @@ function cramer_coefficient(Serie, Lags::Array{Int64,1})
         throw("typeError : 'Lags' needs to be an Array{Int64,1}.")
     end
     Categories = unique(Serie)
-    V = Float64[]
+    V = zeros(length(Lags))
     d = length(Categories)-1
     rf = [relative_frequency(Serie, i) for i in 1:length(Categories)]
-    for lag in Lags
+    for (lidx,lag) in enumerate(Lags)
         v = 0
         lagged_pij = LaggedBivariateProbability(Serie, lag)
-        for i in Categories
-            for j in Categories
+        for i in 1:d+1
+            for j in 1:d+1
                 v =+ ( (lagged_pij[i,j]-rf[i]*rf[j])^2 ) / (rf[i]*rf[j])
             end
         end
-        append!(V,sqrt(v/d))
+        V[lidx] = sqrt(v/d)
     end
     return V
 end
@@ -159,17 +171,16 @@ function cramer_coefficient(Serie, lag = 1)
     if typeof(lag) != Int64
         throw("typeError : 'lag' value needs to be integer.")
     end
-    Categories = unique(Serie)
-    V = Float64[]
     v = 0
-    lagged_pij = LaggedBivariateProbability(Serie,lag)
-    for i in Categories
-        for j in Categories
-            v =+ ((lagged_pij[i,j]-relative_frequency(Serie,i)*relative_frequency(Serie,j))^2)/(relative_frequency(Serie,i)*relative_frequency(Serie,j))
+    d = length(unique(Serie))-1
+    lagged_pij = LaggedBivariateProbability(Serie, lag)
+    rf = [relative_frequency(Serie,i) for i in 1:d+1]
+    for i in 1:d+1
+        for j in 1:d+1
+            v =+ ((lagged_pij[i,j]-rf[i]*rf[j])^2)/(rf[i]*rf[j])
         end
     end
-    append!(V,sqrt(v/(length(Categories)-1)))
-    return V
+    return v/d
 end
 
 """
@@ -270,9 +281,9 @@ function bootstrap_CI(Series, coef_func, lags, n_iter = 1000)
     for i in 1:n_iter
         bootstrap_storage[i,:] = coef_func(shuffle(Series), lags)
     end
-    top_values = sort!(bootstrap_storage, dims = 1)[n_iter - div(n_iter,40),:]
-    bottom_values = sort!(bootstrap_storage, dims = 1)[div(n_iter,40),:]
-    return bootstrap_storage, top_values, bottom_values
+    top_values = sort(bootstrap_storage, dims = 1)[n_iter - div(n_iter,40),:]
+    bottom_values = sort(bootstrap_storage, dims = 1)[div(n_iter,40),:]
+    return top_values, bottom_values
 end
 
 export cramer_coefficient, cohen_coefficient, conditional_entropy, LaggedBivariateProbability, H, theils_u, rate_evolution
