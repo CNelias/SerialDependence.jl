@@ -25,7 +25,7 @@ Cohen's k is a *signed* measurement : its  values lie in [-pe/(1 -pe), 1], with 
 - **`rate_evolution(Series)`**: This is a visual test of "stationarity" : if it varies linearly, then the time-series can be considered as stationary. Returns an `array` of `array`. Each of the internal array represents one of the categories in `'Series'`and describes it's evolution rate.
 
 ## Example
-Using the pewee birdsong data (1943) one can do a serial dependence plot using cramer's cofficient as follow :
+Using the pewee birdsong data (1943) one can do a serial dependence plot using Cohen's cofficient as follow :
 ```Julia
 using DelimitedFiles
 using SerialDependence
