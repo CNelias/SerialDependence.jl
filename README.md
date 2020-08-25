@@ -1,5 +1,5 @@
 # SerialDependence.jl
-When dealing with **categorical data**, things like autocorrelation function are not defined. This is what this module is for : computing **categorical serial dependence**.
+When dealing with **categorical data**, things like autocorrelation function are not defined. This is what this module is for : computing **categorical serial dependences**.
 **Travis**
 :--------:
 [![Build Status](https://travis-ci.com/johncwok/SerialDependence.jl.svg?branch=master)](https://travis-ci.com/johncwok/SerialDependence.jl)
@@ -39,3 +39,8 @@ a = plot(lags, v, xlabel = "Lags", ylabel = "K", label = "Cramer's k")
 plot!(a, lags, t, color = "red", label = "Limits of 95% CI"); plot!(a, lags, b, color = "red", label = "")
 ```
 <img src=https://user-images.githubusercontent.com/34754896/90892617-de87fe80-e3bd-11ea-8f0e-f2e4d77959f2.PNG width = "600">
+
+## TO-DO
+- Implement bias correction for cramer's v
+
+[1] DOI : 10.1002/9781119097013
