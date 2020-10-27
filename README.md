@@ -41,6 +41,6 @@ plot!(a, lags, t, color = "red", label = "Limits of 95% CI"); plot!(a, lags, b, 
 <img src=https://user-images.githubusercontent.com/34754896/90892617-de87fe80-e3bd-11ea-8f0e-f2e4d77959f2.PNG width = "600">
 
 ## TO-DO
-- Implement bias correction for cramer's v
+[] Implement bias correction for cramer's v
 
 [1] DOI : 10.1002/9781119097013
