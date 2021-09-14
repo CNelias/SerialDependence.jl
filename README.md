@@ -1,7 +1,7 @@
 # SerialDependence.jl
 When dealing with **categorical data**, things like autocorrelation function are not defined. This is what this module is for : computing **categorical serial dependences**.
-**Travis**
-:--------:
+|**Travis**|
+|:--------:|
 [![Build Status](https://travis-ci.com/johncwok/SerialDependence.jl.svg?branch=master)](https://travis-ci.com/johncwok/SerialDependence.jl)
 
 The module mostly implements the methods described in C. Weiss's book *"An Introduction to Discrete-Valued
