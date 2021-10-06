@@ -1,7 +1,7 @@
 name = "SerialDependence"
 uuid = "807e6dab-69e6-5de1-b50c-dbd9513c50df"
 authors = ["Corentin Nelias <cwokpoubelle@laposte.net>"]
-version = "0.1.11"
+version = "0.1.1"
 
 [deps]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
