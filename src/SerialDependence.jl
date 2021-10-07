@@ -275,7 +275,7 @@ returns :
     - top (Array{Float64,1}) : Array of values for the upper limit of the CI.
     - bottom (Array{Float64,1}) : Array of values for the lower limit of the CI.
 """
-function bootstrap_CI(Series, coef_func, lags, n_iter = 1000)
+function bootstrap_CI(Series, lags, coef_func, n_iter = 1000)
     critical_values = zeros(n_iter)
     bootstrap_storage = zeros(n_iter, length(lags))
     for i in 1:n_iter
