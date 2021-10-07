@@ -16,3 +16,4 @@ test = ["DelimitedFiles", "Test"]
 
 [compat]
 julia = "^1.0"
+StatsBase = "^0.33"
