@@ -1,8 +1,8 @@
 # SerialDependence.jl
 When dealing with **categorical data**, things like autocorrelation function are not defined. This is what this module is for : computing **categorical serial dependences**.
-|**Travis**|
-|:--------:|
-[![Build Status](https://travis-ci.com/johncwok/SerialDependence.jl.svg?branch=master)](https://travis-ci.com/johncwok/SerialDependence.jl)
+|**Travis**|**Appveyor**|
+|:--------:|:----------:|
+[![Build Status](https://travis-ci.com/johncwok/SerialDependence.jl.svg?branch=master)](https://travis-ci.com/johncwok/SerialDependence.jl)|[![Build status](https://ci.appveyor.com/api/projects/status/1edibrv74rys49ru?svg=true)](https://ci.appveyor.com/project/johncwok/serialdependence-jl)|
 
 The module mostly implements the methods described in C. Weiss's book *"An Introduction to Discrete-Valued
 Time Series"* (2018) [1], with some extras. It contains three main functions :
