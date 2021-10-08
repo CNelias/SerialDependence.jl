@@ -3,7 +3,7 @@ using SerialDependence
 using DelimitedFiles
 
 #testing the functions by reproducing the results from C. Weiss's book "An Introduction to Discrete-Valued Time Series".
-#I was not able to get my hands the full time-series, C. weiss says it is ~1300 elements long, which explains the slight numerical differences in values.
+#I could not find the raw data so I copied the values provided in the book (the raw time-series should be ~1300 elements long), explaining slight numerical differences in results.
 pewee = Int64.(readdlm("pewee.txt", ',')[1,:])
 @test round(cramer_coefficient(pewee, Int64(4))[1], digits = 2) == 0.46
 @test round(cohen_coefficient(pewee, Int64(4))[1], digits = 2) == 0.55
